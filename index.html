@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+        
+        header {
+            background: #4e54c8;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .status {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .chat-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: white;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message-content {
+            padding: 12px 15px;
+            border-radius: 18px;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+            color: #6c757d;
+            margin-left: 15px;
+        }
+        
+        .message-sender {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #4e54c8;
+        }
+        
+        .my-message {
+            align-items: flex-end;
+            margin-left: auto;
+        }
+        
+        .my-message .message-content {
+            background: #4e54c8;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .their-message {
+            align-items: flex-start;
+        }
+        
+        .their-message .message-content {
+            background: #e9ecef;
+            color: #495057;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .system-message {
+            align-items: center;
+            margin: 10px auto;
+            max-width: 100%;
+        }
+        
+        .system-message .message-content {
+            background: #ffeaa7;
+            color: #7d6608;
+            font-style: italic;
+            text-align: center;
+        }
+        
+        .chat-input {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 30px;
+            outline: none;
+            font-size: 1rem;
+        }
+        
+        .send-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #4e54c8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .send-button:hover {
+            background: #3f44a7;
+            transform: scale(1.05);
+        }
+        
+        .login-container {
+            padding: 30px;
+            text-align: center;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .login-title {
+            color: #4e54c8;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .form-group {
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus {
+            border-color: #4e54c8;
+            box-shadow: 0 0 0 3px rgba(78, 84, 200, 0.2);
+        }
+        
+        .login-button {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .login-button:hover {
+            background: #3f44a7;
+        }
+        
+        .user-info {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .user-info-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #495057;
+            font-weight: 600;
+        }
+        
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #4e54c8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 0 auto 15px;
+        }
+        
+        .user-name {
+            color: #495057;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .user-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #38c172;
+            margin: 5px auto;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #38c172;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.5s ease;
+            z-index: 1000;
+        }
+        
+        .notification.error {
+            background: #e74c3c;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .chat-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+                padding: 10px;
+                order: 2;
+            }
+            
+            .main-chat {
+                order: 1;
+            }
+            
+            .container {
+                height: 95vh;
+            }
+        }
+        
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            padding: 20px;
+        }
+        
+        .chat-screen {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+        }
+        
+        .welcome-message {
+            text-align: center;
+            background: #e9f5ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #495057;
+        }
+        
+        .typing-indicator {
+            padding: 5px 15px;
+            font-style: italic;
+            color: #6c757d;
+            height: 30px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #4e54c8;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-button:hover {
+            background: #3f44a7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div class="login-screen" id="loginScreen">
+            <div class="login-container">
+                <h2 class="login-title">Real-Time Chat Login</h2>
+                <p style="color: #6c757d; margin-bottom: 20px;">Enter your username to start chatting</p>
+                
+                <div class="login-form">
+                    <div class="form-group">
+                        <label for="username">Your Name</label>
+                        <input type="text" id="username" placeholder="Enter your name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="room">Room ID</label>
+                        <input type="text" id="room" placeholder="Enter room ID">
+                    </div>
+                    
+                    <button class="login-button" id="loginButton">Join Chat</button>
+                </div>
+                
+                <p style="margin-top: 20px; color: #6c757d;">
+                    To chat with someone, share the same Room ID
+                </p>
+            </div>
+        </div>
+        
+        <!-- Chat Screen -->
+        <div class="chat-screen" id="chatScreen">
+            <header>
+                <div class="logo"><i class="fas fa-comments"></i></div>
+                <h1>Real-Time Chat</h1>
+                <div class="status">
+                    <i class="fas fa-circle"></i> <span id="statusText">Connected</span>
+                </div>
+            </header>
+            
+            <div class="chat-container">
+                <div class="main-chat">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="welcome-message">
+                            <i class="fas fa-info-circle"></i> Welcome to your private chat! Start a conversation.
+                        </div>
+                    </div>
+                    
+                    <div class="typing-indicator" id="typingIndicator"></div>
+                    
+                    <div class="chat-input">
+                        <input type="text" class="message-input" id="messageInput" placeholder="Type your message here...">
+                        <button class="send-button" id="sendButton">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="sidebar">
+                    <div class="user-info">
+                        <div class="user-info-title">Chat Participants</div>
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <div class="user-name" id="userName">You</div>
+                        <div class="user-status"></div>
+                        
+                        <div style="margin: 20px 0; border-top: 1px solid #ddd; padding-top: 20px;">
+                            <div class="user-avatar" id="partnerAvatar">P</div>
+                            <div class="user-name" id="partnerName">Waiting for partner...</div>
+                            <div class="user-status" id="partnerStatus"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="action-button" id="clearChatButton">
+                            <i class="fas fa-trash"></i> Clear Chat
+                        </button>
+                        <button class="action-button" id="logoutButton">
+                            <i class="fas fa-sign-out-alt"></i> Leave Room
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <div class="user-info-title">Room Information</div>
+                        <p style="text-align: center; margin-top: 10px;">Room ID: <span id="roomIdDisplay">None</span></p>
+                        <p style="text-align: center; margin-top: 5px; font-size: 0.9rem; color: #6c757d;">
+                            Share this ID with your chat partner
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <div>Message sent successfully!</div>
+    </div>
+
+    <script>
+        // Simulated WebSocket connection for demonstration purposes
+        // In a real application, this would connect to a WebSocket server
+        const FakeWebSocket = function() {
+            this.readyState = 0;
+            this.onopen = null;
+            this.onmessage = null;
+            this.onclose = null;
+            this.onerror = null;
+            
+            // Simulate connection
+            setTimeout(() => {
+                this.readyState = 1;
+                if (this.onopen) this.onopen();
+            }, 1000);
+            
+            this.send = function(data) {
+                console.log("Sending message:", data);
+                // In a real app, this would send data to the WebSocket server
+            };
+            
+            this.close = function() {
+                this.readyState = 3;
+                if (this.onclose) this.onclose();
+            };
+            
+            // Simulate receiving a message
+            this.simulateMessage = function(data) {
+                if (this.onmessage) {
+                    this.onmessage({ data: JSON.stringify(data) });
+                }
+            };
+        };
+
+        // Chat application functionality
+        const ChatApp = {
+            user: null,
+            partner: null,
+            room: null,
+            messages: [],
+            socket: null,
+            isTyping: false,
+            typingTimer: null,
+            
+            // Initialize the app
+            init() {
+                this.loadMessages();
+                this.setupEventListeners();
+            },
+            
+            // Load messages from storage
+            loadMessages() {
+                const savedMessages = localStorage.getItem('chatMessages');
+                if (savedMessages) {
+                    this.messages = JSON.parse(savedMessages);
+                }
+            },
+            
+            // Save messages to storage
+            saveMessages() {
+                localStorage.setItem('chatMessages', JSON.stringify(this.messages));
+            },
+            
+            // Set up event listeners
+            setupEventListeners() {
+                const loginButton = document.getElementById('loginButton');
+                const sendButton = document.getElementById('sendButton');
+                const messageInput = document.getElementById('messageInput');
+                const clearChatButton = document.getElementById('clearChatButton');
+                const logoutButton = document.getElementById('logoutButton');
+                
+                loginButton.addEventListener('click', () => this.login());
+                sendButton.addEventListener('click', () => this.sendMessage());
+                clearChatButton.addEventListener('click', () => this.clearChat());
+                logoutButton.addEventListener('click', () => this.logout());
+                
+                messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendMessage();
+                    }
+                });
+                
+                messageInput.addEventListener('input', () => {
+                    this.handleTyping();
+                });
+                
+                // Allow login with Enter key
+                document.getElementById('room').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.login();
+                    }
+                });
+            },
+            
+            // Handle user login
+            login() {
+                const username = document.getElementById('username').value.trim();
+                const room = document.getElementById('room').value.trim() || 'default';
+                
+                if (!username) {
+                    this.showNotification('Please enter your name', true);
+                    return;
+                }
+                
+                // Set user and room
+                this.user = {
+                    username,
+                    avatar: username.charAt(0).toUpperCase()
+                };
+                
+                this.room = room;
+                
+                // Save to localStorage
+                localStorage.setItem('chatUser', JSON.stringify(this.user));
+                localStorage.setItem('chatRoom', this.room);
+                
+                // Connect to WebSocket (simulated)
+                this.connectWebSocket();
+                
+                // Add welcome message
+                this.messages.push({
+                    id: this.messages.length + 1,
+                    sender: 'System',
+                    content: `Welcome ${username}! You've joined room ${room}.`,
+                    time: this.getCurrentTime(),
+                    type: 'system'
+                });
+                
+                this.saveMessages();
+                
+                // Update UI
+                this.showChatScreen();
+                this.displayMessages();
+                
+                this.showNotification(`Joined room ${room}!`);
+            },
+            
+            // Connect to WebSocket (simulated)
+            connectWebSocket() {
+                this.socket = new FakeWebSocket();
+                
+                this.socket.onopen = () => {
+                    document.getElementById('statusText').textContent = 'Connected';
+                    this.showNotification('Connected to chat server');
+                    
+                    // Simulate partner joining after a delay
+                    setTimeout(() => {
+                        this.simulatePartnerJoin();
+                    }, 2000);
+                };
+                
+                this.socket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    this.handleWebSocketMessage(data);
+                };
+                
+                this.socket.onclose = () => {
+                    document.getElementById('statusText').textContent = 'Disconnected';
+                    this.showNotification('Disconnected from chat server', true);
+                };
+            },
+            
+            // Handle WebSocket messages
+            handleWebSocketMessage(data) {
+                switch (data.type) {
+                    case 'message':
+                        this.messages.push({
+                            id: this.messages.length + 1,
+                            sender: data.sender,
+                            content: data.content,
+                            time: this.getCurrentTime(),
+                            type: 'user'
+                        });
+                        this.saveMessages();
+                        this.displayMessages();
+                        break;
+                        
+                    case 'user_joined':
+                        if (data.user !== this.user.username) {
+                            this.partner = {
+                                username: data.user,
+                                avatar: data.user.charAt(0).toUpperCase()
+                            };
+                            this.messages.push({
+                                id: this.messages.length + 1,
+                                sender: 'System',
+                                content: `${data.user} joined the chat`,
+                                time: this.getCurrentTime(),
+                                type: 'system'
+                            });
+                            this.saveMessages();
+                            this.displayMessages();
+                            this.updatePartnerInfo();
+                            this.showNotification(`${data.user} joined the chat`);
+                        }
+                        break;
+                        
+                    case 'user_left':
+                        this.messages.push({
+                            id: this.messages.length + 1,
+                            sender: 'System',
+                            content: `${data.user} left the chat`,
+                            time: this.getCurrentTime(),
+                            type: 'system'
+                        });
+                        this.saveMessages();
+                        this.displayMessages();
+                        this.partner = null;
+                        this.updatePartnerInfo();
+                        this.showNotification(`${data.user} left the chat`);
+                        break;
+                        
+                    case 'typing':
+                        if (data.user !== this.user.username) {
+                            const typingIndicator = document.getElementById('typingIndicator');
+                            typingIndicator.textContent = `${data.user} is typing...`;
+                            
+                            clearTimeout(this.typingTimer);
+                            this.typingTimer = setTimeout(() => {
+                                typingIndicator.textContent = '';
+                            }, 1000);
+                        }
+                        break;
+                }
+            },
+            
+            // Simulate a partner joining (for demo purposes)
+            simulatePartnerJoin() {
+                const demoUsers = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'];
+                const demoUser = demoUsers[Math.floor(Math.random() * demoUsers.length)];
+                
+                this.socket.simulateMessage({
+                    type: 'user_joined',
+                    user: demoUser,
+                    room: this.room
+                });
+                
+                // Simulate a welcome message from the partner
+                setTimeout(() => {
+                    this.socket.simulateMessage({
+                        type: 'message',
+                        sender: demoUser,
+                        content: `Hi ${this.user.username}! I just joined the chat.`,
+                        room: this.room
+                    });
+                }, 1000);
+            },
+            
+            // Show chat screen
+            showChatScreen() {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('chatScreen').style.display = 'flex';
+                
+                // Update user info
+                document.getElementById('userAvatar').textContent = this.user.avatar;
+                document.getElementById('userName').textContent = this.user.username;
+                document.getElementById('roomIdDisplay').textContent = this.room;
+                
+                // Set focus to message input
+                document.getElementById('messageInput').focus();
+            },
+            
+            // Send a message
+            sendMessage() {
+                const input = document.getElementById('messageInput');
+                const content = input.value.trim();
+                
+                if (!content) return;
+                
+                // Create message
+                const message = {
+                    id: this.messages.length + 1,
+                    sender: this.user.username,
+                    content,
+                    time: this.getCurrentTime(),
+                    type: 'user'
+                };
+                
+                // Add to messages
+                this.messages.push(message);
+                this.saveMessages();
+                
+                // Send via WebSocket
+                if (this.socket) {
+                    this.socket.send({
+                        type: 'message',
+                        sender: this.user.username,
+                        content,
+                        room: this.room
+                    });
+                }
+                
+                // Clear input
+                input.value = '';
+                
+                // Display message
+                this.displayMessages();
+                
+                // Show notification
+                this.showNotification('Message sent!');
+            },
+            
+            // Handle typing indicator
+            handleTyping() {
+                if (this.socket && !this.isTyping) {
+                    this.isTyping = true;
+                    
+                    this.socket.send({
+                        type: 'typing',
+                        sender: this.user.username,
+                        room: this.room
+                    });
+                    
+                    setTimeout(() => {
+                        this.isTyping = false;
+                    }, 1000);
+                }
+            },
+            
+            // Display all messages
+            displayMessages() {
+                const messagesContainer = document.getElementById('chatMessages');
+                messagesContainer.innerHTML = '';
+                
+                // Add welcome message
+                const welcomeMsg = document.createElement('div');
+                welcomeMsg.className = 'welcome-message';
+                welcomeMsg.innerHTML = `<i class="fas fa-info-circle"></i> Welcome to your private chat! Start a conversation.`;
+                messagesContainer.appendChild(welcomeMsg);
+                
+                // Add all messages
+                this.messages.forEach(msg => {
+                    const messageElement = document.createElement('div');
+                    
+                    if (msg.type === 'system') {
+                        messageElement.className = 'message system-message';
+                        messageElement.innerHTML = `
+                            <div class="message-content">${msg.content}</div>
+                            <div class="message-time">${msg.time}</div>
+                        `;
+                    } else if (msg.sender === this.user.username) {
+                        messageElement.className = 'message my-message';
+                        messageElement.innerHTML = `
+                            <div class="message-sender">You</div>
+                            <div class="message-content">${msg.content}</div>
+                            <div class="message-time">${msg.time}</div>
+                        `;
+                    } else {
+                        messageElement.className = 'message their-message';
+                        messageElement.innerHTML = `
+                            <div class="message-sender">${msg.sender}</div>
+                            <div class="message-content">${msg.content}</div>
+                            <div class="message-time">${msg.time}</div>
+                        `;
+                    }
+                    
+                    messagesContainer.appendChild(messageElement);
+                });
+                
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            },
+            
+            // Update partner information
+            updatePartnerInfo() {
+                if (this.partner) {
+                    document.getElementById('partnerAvatar').textContent = this.partner.avatar;
+                    document.getElementById('partnerName').textContent = this.partner.username;
+                    document.getElementById('partnerStatus').style.background = '#38c172';
+                } else {
+                    document.getElementById('partnerAvatar').textContent = 'P';
+                    document.getElementById('partnerName').textContent = 'Waiting for partner...';
+                    document.getElementById('partnerStatus').style.background = '#ced4da';
+                }
+            },
+            
+            // Clear chat history
+            clearChat() {
+                if (confirm("Are you sure you want to clear the chat history?")) {
+                    this.messages = this.messages.filter(m => m.type === 'system');
+                    this.saveMessages();
+                    this.displayMessages();
+                    this.showNotification('Chat history cleared');
+                }
+            },
+            
+            // Logout
+            logout() {
+                if (confirm("Are you sure you want to leave the chat room?")) {
+                    // Send leave notification
+                    if (this.socket) {
+                        this.socket.send({
+                            type: 'user_left',
+                            user: this.user.username,
+                            room: this.room
+                        });
+                        this.socket.close();
+                    }
+                    
+                    localStorage.removeItem('chatUser');
+                    localStorage.removeItem('chatRoom');
+                    localStorage.removeItem('chatMessages');
+                    
+                    this.user = null;
+                    this.partner = null;
+                    this.room = null;
+                    this.messages = [];
+                    
+                    document.getElementById('loginScreen').style.display = 'flex';
+                    document.getElementById('chatScreen').style.display = 'none';
+                    
+                    // Clear input fields
+                    document.getElementById('username').value = '';
+                    document.getElementById('room').value = '';
+                    document.getElementById('username').focus();
+                }
+            },
+            
+            // Get current time in HH:MM format
+            getCurrentTime() {
+                const now = new Date();
+                return now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+            },
+            
+            // Show notification
+            showNotification(message, isError = false) {
+                const notification = document.getElementById('notification');
+                notification.querySelector('div').textContent = message;
+                
+                if (isError) {
+                    notification.innerHTML = '<i class="fas fa-exclamation-circle"></i> <div>' + message + '</div>';
+                    notification.classList.add('error');
+                } else {
+                    notification.innerHTML = '<i class="fas fa-check-circle"></i> <div>' + message + '</div>';
+                    notification.classList.remove('error');
+                }
+                
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+        };
+
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            ChatApp.init();
+            
+            // Check if user is already logged in
+            const savedUser = localStorage.getItem('chatUser');
+            const savedRoom = localStorage.getItem('chatRoom');
+            
+            if (savedUser && savedRoom) {
+                ChatApp.user = JSON.parse(savedUser);
+                ChatApp.room = savedRoom;
+                ChatApp.showChatScreen();
+                ChatApp.displayMessages();
+                ChatApp.connectWebSocket();
+            } else {
+                // Set focus to username input
+                document.getElementById('username').focus();
+            }
+        });
+    </script>
+</body>
+</html>
